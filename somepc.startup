@@ -1,3 +1,8 @@
 ifconfig eth0 6.6.6.6/24 up
 ip route add 1.2.0.0/20 via 6.6.6.1
 ip route add 5.4.3.0/24 via 6.6.6.2
+
+# Ssh
+chmod 0700 /root/.ssh
+chmod 0600 /root/.ssh/id_rsa
+chmod 0644 /root/.ssh/id_rsa.pub
