@@ -6,3 +6,56 @@ brctl addbr br0
 brctl addif br0 eth0
 brctl addif br0 eth1
 ifconfig br0 up
+
+# Setup iptables
+    # Remove any existing rules
+    iptables -F
+
+    # Create our custom chain for routing services
+    iptables -N services
+
+    # Deny by default on all chains
+    iptables --policy FORWARD DROP
+    iptables --policy services DROP
+
+    # FORWARD
+        # Route `router1` requests/responses to our services chain
+        iptables -A FORWARD -s 1.2.2.1 -j services
+        iptables -A FORWARD -d 1.2.2.1 -j services
+
+        # Don't allow requests from inner to inner or outer to outer, to avoid
+        # ip spoofing
+        iptables -A FORWARD   -s 1.2.0.0/20   -d 1.2.0.0/20 -j DROP
+        iptables -A FORWARD ! -s 1.2.0.0/20 ! -d 1.2.0.0/20 -j DROP
+
+        # Else route to services chain
+        iptables -A FORWARD -j services
+
+    # Services
+        # Allow all ping/traceroute
+        iptables -A services -p icmp                     -j ACCEPT
+        iptables -A services -p udp  --dport 33434:33534 -j ACCEPT
+
+        # Allow requests/responses to company file server smb (tcp/445) from SValley
+        iptables -A services -i br0 -s 5.4.3.0/24 -d 1.2.4.55   -p tcp             --dport 445 -j ACCEPT
+        iptables -A services -o br0 -s 1.2.4.55   -d 5.4.3.0/24 -p tcp --sport 445             -j ACCEPT
+
+        # Allow requests/responses to web server ssh (tcp/22) and http (tcp/80) from internet
+        iptables -A services -i br0            -d 1.2.3.1 -m multiport -p tcp               --dport 22,80 -j ACCEPT
+        iptables -A services -o br0 -s 1.2.3.1            -m multiport -p tcp --sport 22,80               -j ACCEPT
+
+        # Allow requests/responses to email server smtps (tcp/465) from internet
+        iptables -A services -i br0            -d 1.2.3.2 -p tcp             --dport 465 -j ACCEPT
+        iptables -A services -o br0 -s 1.2.3.2            -p tcp --sport 465             -j ACCEPT
+
+        # Allow requests/responses from email server smtps (tcp/465)
+        iptables -A services -o br0 -s 1.2.3.2            -p tcp             --dport 465 -j ACCEPT
+        iptables -A services -i br0            -d 1.2.3.2 -p tcp --sport 465             -j ACCEPT
+
+        # Allow requests/responses to internet ssh (tcp/22), http (tcp/80), imaps (tcp/993)
+        iptables -A services -o br0 -s 1.2.0.0/20 -p tcp -m multiport ! --sport 22,80,993   --dport 22,80,993 -j ACCEPT
+        iptables -A services -i br0 -d 1.2.0.0/20 -p tcp -m multiport   --sport 22,80,993 ! --dport 22,80,993 -j ACCEPT
+
+        # Allow requests/responses to mail server imaps (tcp/993) from Oeiras
+        iptables -A services -i br0 -s 5.4.3.0/24 -d 1.2.3.2    -p tcp             --dport 993 -j ACCEPT
+        iptables -A services -o br0 -s 1.2.3.2    -d 5.4.3.0/24 -p tcp --sport 993             -j ACCEPT

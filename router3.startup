@@ -1,3 +1,30 @@
 ifconfig eth0 5.4.3.254/24 up
 ifconfig eth1 6.6.6.2/24 up
 ip route add 0.0.0.0/0 via 6.6.6.1
+
+# Setup iptables
+    # Remove any existing rules
+    iptables -F
+
+    # Deny by default
+    iptables --policy FORWARD DROP
+
+    # Drop packets with addresses from outside/inside our network
+    iptables -A FORWARD -i eth0 ! -s 5.4.3.0/24 -j DROP
+    iptables -A FORWARD -i eth1   -s 5.4.3.0/24 -j DROP
+
+    # Allow all ping/traceroute
+    iptables -A FORWARD -p icmp                     -j ACCEPT
+    iptables -A FORWARD -p udp  --dport 33434:33534 -j ACCEPT
+
+    # Allow requests/responses to internet ssh (tcp/22), http (tcp/80), imaps (tcp/993)
+    iptables -A FORWARD -i eth0 -p tcp -m multiport                   --dport 22,80,993 -j ACCEPT
+    iptables -A FORWARD -i eth1 -p tcp -m multiport --sport 22,80,993                   -j ACCEPT
+
+    # Allow requests/responses to email server smtps (tcp/465)
+    iptables -A FORWARD -i eth0            -d 1.2.3.2 -p tcp             --dport 465 -j ACCEPT
+    iptables -A FORWARD -i eth1 -s 1.2.3.2            -p tcp --sport 465             -j ACCEPT
+
+    # Allow requests/responses to Oeiras smb (tcp/445)
+    iptables -A FORWARD -i eth0             -d 1.2.4.55 -p tcp             --dport 445 -j ACCEPT
+    iptables -A FORWARD -i eth1 -s 1.2.4.55             -p tcp --sport 445             -j ACCEPT
