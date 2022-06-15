@@ -1,2 +1,11 @@
 ifconfig eth0 1.2.3.3/24 up
 route add default gw 1.2.3.254
+
+# Snort
+    chown -R root:root /etc/snort
+    chmod 0755 /etc/snort
+    chmod 0640 /etc/snort/snort.conf
+    chmod 0600 /etc/snort/snort.debian.conf
+    chmod 0755 /etc/snort/rules
+    chmod 0644 /etc/snort/rules/local.rules
+    snort -A fast -D -v -c /etc/snort/snort.conf
