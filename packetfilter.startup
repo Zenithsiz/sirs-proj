@@ -23,6 +23,10 @@ ifconfig br0 up
         iptables -A FORWARD -s 1.2.2.1 -j services
         iptables -A FORWARD -d 1.2.2.1 -j services
 
+        # Route VPN `1.2.1.0/24` requests/responses to our services chain
+        iptables -A FORWARD -s 1.2.1.0/24 -j services
+        iptables -A FORWARD -d 1.2.1.0/24 -j services
+
         # Don't allow requests from inner to inner or outer to outer, to avoid
         # ip spoofing
         iptables -A FORWARD   -s 1.2.0.0/20   -d 1.2.0.0/20 -j DROP

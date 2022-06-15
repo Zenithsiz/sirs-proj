@@ -28,3 +28,17 @@ ip route add 0.0.0.0/0 via 6.6.6.1
     # Allow requests/responses to Oeiras smb (tcp/445)
     iptables -A FORWARD -i eth0             -d 1.2.4.55 -p tcp             --dport 445 -j ACCEPT
     iptables -A FORWARD -i eth1 -s 1.2.4.55             -p tcp --sport 445             -j ACCEPT
+
+# OpenVPN client
+    # Setup `tun/tap` dev
+    mkdir -p /dev/net
+    mknod /dev/net/tun c 10 200
+    chmod 600 /dev/net/tun
+
+    # Fix permissions
+    cd ~
+    chmod 0644 router3-client.crt ca.crt client.conf
+    chmod 0600 router3-client.key ta.key
+
+    # Then start client
+    openvpn --redirect-gateway def1 --cipher AES-256-CBC --config client.conf &
