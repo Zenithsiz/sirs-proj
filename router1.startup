@@ -15,4 +15,4 @@ ip route add 0.0.0.0/0 via 6.6.6.2
     chmod 0600 router1-server.key ta.key
 
     # Then start server
-    openvpn --client-config-dir ccd --ccd-exclusive --cipher AES-256-CBC --config server.conf &
+    openvpn server.conf &
