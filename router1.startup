@@ -3,6 +3,22 @@ ifconfig eth1 6.6.6.1/24 up
 ip route add 1.2.0.0/20 via 1.2.2.2
 ip route add 0.0.0.0/0 via 6.6.6.2
 
+# Setup iptables
+    # Remove any existing rules
+    iptables -F
+
+    # Deny by default
+    iptables --policy FORWARD DROP
+
+    # Allow all ping/traceroute
+    iptables -A FORWARD -p icmp                     -j ACCEPT
+    iptables -A FORWARD -p udp  --sport 33434:33534 -j ACCEPT
+    iptables -A FORWARD -p udp  --dport 33434:33534 -j ACCEPT
+
+    # Allow all openvpn from Oeiras
+    iptables -A FORWARD -i eth1 -s 5.4.3.0/24               -p udp              --dport 1194 -p ACCEPT
+    iptables -A FORWARD -i eth0               -d 5.4.3.0/24 -p udp --sport 1194              -p ACCEPT
+
 # OpenVPN server
     # Setup `tun/tap` dev
     mkdir -p /dev/net

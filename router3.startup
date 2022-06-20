@@ -15,6 +15,7 @@ ip route add 0.0.0.0/0 via 6.6.6.1
 
     # Allow all ping/traceroute
     iptables -A FORWARD -p icmp                     -j ACCEPT
+    iptables -A FORWARD -p udp  --sport 33434:33534 -j ACCEPT
     iptables -A FORWARD -p udp  --dport 33434:33534 -j ACCEPT
 
     # Requests to outside

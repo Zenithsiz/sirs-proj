@@ -38,6 +38,7 @@ ifconfig br0 up
     # Services
         # Allow all ping/traceroute
         iptables -A services -p icmp                     -j ACCEPT
+        iptables -A services -p udp  --sport 33434:33534 -j ACCEPT
         iptables -A services -p udp  --dport 33434:33534 -j ACCEPT
 
         # Requests to inside
